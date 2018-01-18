@@ -3,6 +3,7 @@ package io.mithrilcoin.front.common.rest;
 import java.net.SocketTimeoutException;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -37,7 +38,7 @@ public class RestOperationImpl {
 	protected String host = "";
 	protected String port = "";
 
-	// @Autowired
+	@Autowired
 	protected ApiAccessInfo accessInfo;
 
 	private StringBuilder getRestUrl(String restUrl) {
