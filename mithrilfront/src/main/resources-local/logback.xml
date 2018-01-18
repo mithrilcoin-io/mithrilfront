@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+   <!--  appender STDOUT 형식 정의  -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{yyyyMMdd HH:mm:ss.SSS} [%thread][%method:%line] %-5level %logger{36} - %msg %n</pattern>
+    </encoder>
+  </appender>
+  <!--  appender file 형식 정의  -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread][%method:%line] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>logs/mithril_front-log.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+			
+			<!-- each file should be at most 10MB, keep 30 days worth of history -->
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>100MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+  </appender>
+  
+  <logger name="org.springframework.cache" level="trace">
+     <appender-ref ref="STDOUT" />
+     <appender-ref ref="FILE" />
+  </logger>
+  
+  <logger name="org.springframework.web" level="trace">
+        <appender-ref ref="STDOUT" />
+         <appender-ref ref="FILE" />
+  </logger>
+  <logger name="kr.co.finy.cashcharge.common.redis" level="trace">
+  	  <appender-ref ref="STDOUT" />
+         <appender-ref ref="FILE" />
+  </logger>
+  <root level="DEBUG">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE" />
+  </root>  
+</configuration>
