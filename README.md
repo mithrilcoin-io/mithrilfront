@@ -1,2 +1,2 @@
 # mithrilfront
-mithril centralized service front-end
+mithril service front-end
