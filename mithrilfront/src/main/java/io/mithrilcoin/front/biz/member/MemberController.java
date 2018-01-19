@@ -1,7 +1,9 @@
 package io.mithrilcoin.front.biz.member;
 
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLEngineResult.Status;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,10 +31,14 @@ import io.mithril.vo.member.Member;
 import io.mithril.vo.member.MemberDetail;
 import io.mithril.vo.member.MemberInfo;
 import io.mithril.vo.member.UserInfo;
+import io.mithril.vo.message.Message;
+import io.mithrilcoin.front.common.redis.RedisDataRepository;
 import io.mithrilcoin.front.common.rest.IRestTemplate;
+import io.mithrilcoin.front.config.ServerInfoConfiguration;
 import io.mithrilcoin.front.response.MithrilResponseEntity;
 import io.mithrilcoin.front.util.DateUtil;
 import io.mithrilcoin.front.util.HashingUtil;
+import io.mithrilcoin.front.util.MailTemplateUtil;
 
 @Controller
 @RequestMapping("/member")
@@ -51,6 +58,15 @@ public class MemberController {
 
 	@Autowired
 	private DateUtil dateUtil;
+
+	@Autowired
+	private MailTemplateUtil mailTemplateUtil;
+
+	@Autowired
+	private ServerInfoConfiguration serverInfo;
+
+	@Autowired
+	private RedisDataRepository<String, String> redisDataRepo;
 
 	/**
 	 * 회원가입
@@ -75,18 +91,20 @@ public class MemberController {
 				// 세션에 로그인으로 처리
 				assignUserSession(memberInfo, null, request.getSession());
 				result.setCode(MithrilPlayCode.SUCCESS);
-				
+
 			} else // 회원가입 실패
 			{
 				// 이미 있는 회원 문제
 				if (memberInfo != null && memberInfo.getIdx() < 0) {
-			
+
 					result.setCode(MithrilPlayCode.EXIST_EMAIL);
-//					return new MithrilResponseEntity<MithrilApiResult>("Email is already exist.", HttpStatus.OK,
-//							request.getSession());
+					// return new MithrilResponseEntity<MithrilApiResult>("Email is already exist.",
+					// HttpStatus.OK,
+					// request.getSession());
 				} else {
 					result.setCode(MithrilPlayCode.API_FAIL);
-//					return new MithrilResponseEntity<MithrilApiResult>("Fail", HttpStatus.OK, request.getSession());
+					// return new MithrilResponseEntity<MithrilApiResult>("Fail", HttpStatus.OK,
+					// request.getSession());
 				}
 			}
 
@@ -95,7 +113,7 @@ public class MemberController {
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
-		result.setResponseDate(new Date());	
+		result.setResponseDate(new Date());
 		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
 	}
 
@@ -105,7 +123,8 @@ public class MemberController {
 	 * @return
 	 */
 	@PostMapping("/signin")
-	public MithrilResponseEntity<MithrilApiResult> signIn(@RequestBody @Valid Member member, HttpServletRequest request) {
+	public MithrilResponseEntity<MithrilApiResult> signIn(@RequestBody @Valid Member member,
+			HttpServletRequest request) {
 		logger.info("/member/signin/ ");
 		request.getSession().invalidate();
 		MithrilApiResult result = new MithrilApiResult();
@@ -117,10 +136,12 @@ public class MemberController {
 			Member findMember = mithrilApiTemplate.post("/member/signin/", memberRequest, typeRef);
 			if (findMember != null) {
 				if (findMember.getIdx() > 0) {
-			
-					ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {}; 
-					
-					UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + findMember.getIdx() +"/", "", ref);
+
+					ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {
+					};
+
+					UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + findMember.getIdx() + "/",
+							"", ref);
 					userInfo.setId(hashingUtil.getHashedString(findMember.getEmail()));
 					userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
 					userInfo.setState(findMember.getState());
@@ -128,22 +149,24 @@ public class MemberController {
 					// hash id로 이메일 값 저장
 					request.getSession().setAttribute(userInfo.getId(), findMember.getEmail());
 					result.setCode(MithrilPlayCode.SUCCESS);
-					
+
 				} else {
 					result.setCode(MithrilPlayCode.PASSWORD_MATCH_FAIL);
-				//	return new MithrilResponseEntity<MithrilApiResult>("Invalid Password", HttpStatus.OK, request.getSession());
+					// return new MithrilResponseEntity<MithrilApiResult>("Invalid Password",
+					// HttpStatus.OK, request.getSession());
 				}
 			} else {
 				result.setCode(MithrilPlayCode.INVALID_USER);
-				//return new MithrilResponseEntity<MithrilApiResult>("Invalid User", HttpStatus.OK, request.getSession());
+				// return new MithrilResponseEntity<MithrilApiResult>("Invalid User",
+				// HttpStatus.OK, request.getSession());
 			}
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		result.setResponseDate(new Date());	
+
+		result.setResponseDate(new Date());
 		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
 	}
 
@@ -160,17 +183,18 @@ public class MemberController {
 				: (UserInfo) session.getAttribute("userInfo");
 		MithrilApiResult result = new MithrilApiResult();
 		result.setRequestDate(new Date());
-		
+
 		if (userInfo != null && userInfo.getId().equals(id)) {
 			// 세션 정보 클리어
 			request.getSession().invalidate();
 			result.setCode(MithrilPlayCode.SUCCESS);
 		} else {
 			result.setCode(MithrilPlayCode.INVALID_USER);
-			//return new MithrilResponseEntity<String>("WHO ARE U?", HttpStatus.OK, request.getSession());
+			// return new MithrilResponseEntity<String>("WHO ARE U?", HttpStatus.OK,
+			// request.getSession());
 		}
-		
-		result.setResponseDate(new Date());	
+
+		result.setResponseDate(new Date());
 		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
 	}
 
@@ -179,8 +203,8 @@ public class MemberController {
 	 * 
 	 * @return
 	 */
-	
-	//@PostMapping("/update/")
+
+	// @PostMapping("/update/")
 	public MithrilResponseEntity<String> updateMemberInfo() {
 		return null;
 	}
@@ -190,11 +214,60 @@ public class MemberController {
 	 * 
 	 * @return
 	 */
-	public MithrilResponseEntity<String> updateMemberDetail() {
+
+	@PostMapping("/update/memberDetail/{id}")
+	public MithrilResponseEntity<MithrilApiResult> updateMemberDetail() {
 		return null;
 	}
+
+	@PostMapping("/sendmail/auth/{id}")
+	public MithrilResponseEntity<MithrilApiResult> sendAuthMail(@PathVariable String id, HttpServletRequest request) {
+
+		MithrilApiResult result = new MithrilApiResult();
+		result.setRequestDate(new Date());
+		
+		String emailAddress = (String) request.getSession().getAttribute(id);
+		Message authMail = new Message();
+		authMail.setSender(mailTemplateUtil.getDefaultSender());
+		authMail.setReceiver(emailAddress);
+		authMail.setBody(mailTemplateUtil.getAuthMailBody(serverInfo.getMyFullUrl() + "/member/auth/" + id));
+		authMail.setState("M002001");
+		authMail.setTypecode("T001001");
+		authMail.setTitle("[MithrilPlay] Confirm your MithrilPlay account, " + emailAddress);
+		// authMail.setBody(body);
+
+		try {
+			String mailParam = objMapper.writeValueAsString(authMail);
+			ParameterizedTypeReference<Message> typeRef = new ParameterizedTypeReference<Message>() {
+			};
+			Message resultMessage = mithrilApiTemplate.post("/message/send", mailParam, typeRef);
+			if (resultMessage != null && "M002003".equals(resultMessage.getState())) {
+				result.setCode(MithrilPlayCode.SUCCESS);
+				redisDataRepo.setData("authMail_" + id, emailAddress, 24, TimeUnit.HOURS);
+			}
+			else
+			{
+				result.setCode(MithrilPlayCode.API_FAIL);
+			}
+
+		} catch (Exception e) {
+			result.setCode(MithrilPlayCode.API_ERROR);
+			e.printStackTrace();
+		}
+		result.setResponseDate(new Date());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
+	}
+
+	@GetMapping("/auth/{id}")
+	public String authorizeMemberMail(@PathVariable String id) {
+		String emailId = redisDataRepo.getData("authMail_" + id);
+		
+		return "";
+	}
+
 	/**
-	 * 사용자 정보 세션 셋팅 함수 
+	 * 사용자 정보 세션 셋팅 함수
+	 * 
 	 * @param info
 	 * @param detail
 	 * @param session

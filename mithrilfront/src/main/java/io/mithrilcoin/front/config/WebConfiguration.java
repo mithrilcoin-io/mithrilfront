@@ -17,6 +17,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.resource.PathResourceResolver;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
@@ -33,11 +34,16 @@ public class WebConfiguration extends WebMvcConfigurerAdapter {
 	            "classpath:/static/", "classpath:/public/"
 	    };
 
-	    @Override
-	    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-	        registry.addResourceHandler("/**")
-	                .addResourceLocations(CLASSPATH_RESOURCE_LOCATIONS);
-	    }
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/**")
+                .addResourceLocations(CLASSPATH_RESOURCE_LOCATIONS);
+    }
+    
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/").setViewName("forward:/welcome/hello");
+    }
 
 //	@Override
 //	public void addResourceHandlers(final ResourceHandlerRegistry registry) {
@@ -99,9 +105,9 @@ public class WebConfiguration extends WebMvcConfigurerAdapter {
 		registry.addInterceptor(interceptor())
 				.addPathPatterns("/**")
 				.excludePathPatterns("/health","/health/*","/health/*/**")
-				.excludePathPatterns("/auth", "/auth/*", "/auth/*/**")
-				.excludePathPatterns("/signin", "/signin/*", "/signin/*/**")
-				.excludePathPatterns("/signup", "/signup/*", "/signup/*/**")
+				.excludePathPatterns("/member/auth", "/member/auth/*", "/member/auth/*/**")
+				.excludePathPatterns("/member/signin", "/member/signin/*", "/member/signin/*/**")
+				.excludePathPatterns("/member/signup", "/member/signup/*", "/member/signup/*/**")
 				.excludePathPatterns("/error")
 		// .addPathPatterns("", "/**/*")
 		// .excludePathPatterns("/resourceRevision/*")

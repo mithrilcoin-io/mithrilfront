@@ -7,12 +7,22 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
+import io.mithril.vo.member.UserInfo;
+
 @Component
 public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
+		UserInfo userInfo = request.getSession().getAttribute("userInfo") == null ? null
+				: (UserInfo) request.getSession().getAttribute("userInfo");
+
+		if (userInfo == null) {
+			response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없습니다.");
+			return false;
+		}
+
 		return true;
 	}
 
