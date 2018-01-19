@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.mithril.vo.entity.MithrilApiResult;
+import io.mithril.vo.entity.MithrilPlayCode;
 import io.mithril.vo.member.Member;
 import io.mithril.vo.member.MemberDetail;
 import io.mithril.vo.member.MemberInfo;
@@ -56,11 +58,13 @@ public class MemberController {
 	 * @return
 	 */
 	@PostMapping("/signup")
-	public MithrilResponseEntity<String> signUp(@RequestBody @Valid MemberInfo signupMember,
+	public MithrilResponseEntity<MithrilApiResult> signUp(@RequestBody @Valid MemberInfo signupMember,
 			HttpServletRequest request) {
 
 		logger.info("/member/singup/ ");
+		MithrilApiResult result = new MithrilApiResult();
 		try {
+			result.setRequestDate(new Date());
 			request.getSession().invalidate();
 			String memberRequest = objMapper.writeValueAsString(signupMember);
 			ParameterizedTypeReference<MemberInfo> typeRef = new ParameterizedTypeReference<MemberInfo>() {
@@ -70,25 +74,29 @@ public class MemberController {
 			if (memberInfo != null && memberInfo.getIdx() > 0) {
 				// 세션에 로그인으로 처리
 				assignUserSession(memberInfo, null, request.getSession());
-				return new MithrilResponseEntity<String>("OK", HttpStatus.OK, request.getSession());
+				result.setCode(MithrilPlayCode.SUCCESS);
+				
 			} else // 회원가입 실패
 			{
 				// 이미 있는 회원 문제
-				if (memberInfo.getIdx() < 0) {
-					return new MithrilResponseEntity<String>("Email is already exist.", HttpStatus.OK,
-							request.getSession());
+				if (memberInfo != null && memberInfo.getIdx() < 0) {
+			
+					result.setCode(MithrilPlayCode.EXIST_EMAIL);
+//					return new MithrilResponseEntity<MithrilApiResult>("Email is already exist.", HttpStatus.OK,
+//							request.getSession());
 				} else {
-					return new MithrilResponseEntity<String>("Fail", HttpStatus.OK, request.getSession());
+					result.setCode(MithrilPlayCode.API_FAIL);
+//					return new MithrilResponseEntity<MithrilApiResult>("Fail", HttpStatus.OK, request.getSession());
 				}
 			}
 
 		} catch (Exception e) {
-
+			result.setCode(MithrilPlayCode.API_ERROR);
 			logger.error(e.getMessage());
 			e.printStackTrace();
 		}
-
-		return new MithrilResponseEntity<String>("Error", HttpStatus.OK, request.getSession());
+		result.setResponseDate(new Date());	
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
 	}
 
 	/**
@@ -97,9 +105,11 @@ public class MemberController {
 	 * @return
 	 */
 	@PostMapping("/signin")
-	public MithrilResponseEntity<String> signIn(@RequestBody @Valid Member member, HttpServletRequest request) {
+	public MithrilResponseEntity<MithrilApiResult> signIn(@RequestBody @Valid Member member, HttpServletRequest request) {
 		logger.info("/member/signin/ ");
 		request.getSession().invalidate();
+		MithrilApiResult result = new MithrilApiResult();
+		result.setRequestDate(new Date());
 		try {
 			String memberRequest = objMapper.writeValueAsString(member);
 			ParameterizedTypeReference<Member> typeRef = new ParameterizedTypeReference<Member>() {
@@ -117,21 +127,24 @@ public class MemberController {
 					request.getSession().setAttribute("userInfo", userInfo);
 					// hash id로 이메일 값 저장
 					request.getSession().setAttribute(userInfo.getId(), findMember.getEmail());
-					
-					return new MithrilResponseEntity<String>("OK", HttpStatus.OK, request.getSession());
+					result.setCode(MithrilPlayCode.SUCCESS);
 					
 				} else {
-					return new MithrilResponseEntity<String>("Invalid Password", HttpStatus.OK, request.getSession());
+					result.setCode(MithrilPlayCode.PASSWORD_MATCH_FAIL);
+				//	return new MithrilResponseEntity<MithrilApiResult>("Invalid Password", HttpStatus.OK, request.getSession());
 				}
 			} else {
-				return new MithrilResponseEntity<String>("Invalid User", HttpStatus.OK, request.getSession());
+				result.setCode(MithrilPlayCode.INVALID_USER);
+				//return new MithrilResponseEntity<MithrilApiResult>("Invalid User", HttpStatus.OK, request.getSession());
 			}
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new MithrilResponseEntity<String>("Error", HttpStatus.OK, request.getSession());
+		
+		result.setResponseDate(new Date());	
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
 	}
 
 	/**
@@ -140,19 +153,25 @@ public class MemberController {
 	 * @return
 	 */
 	@PostMapping("/signout/{id}")
-	public MithrilResponseEntity<String> signOut(@PathVariable String id, HttpServletRequest request) {
+	public MithrilResponseEntity<MithrilApiResult> signOut(@PathVariable String id, HttpServletRequest request) {
 
 		HttpSession session = request.getSession();
 		UserInfo userInfo = session.getAttribute("userInfo") == null ? null
 				: (UserInfo) session.getAttribute("userInfo");
+		MithrilApiResult result = new MithrilApiResult();
+		result.setRequestDate(new Date());
+		
 		if (userInfo != null && userInfo.getId().equals(id)) {
 			// 세션 정보 클리어
 			request.getSession().invalidate();
-			return new MithrilResponseEntity<String>("OK", HttpStatus.OK, request.getSession());
+			result.setCode(MithrilPlayCode.SUCCESS);
 		} else {
-			return new MithrilResponseEntity<String>("WHO ARE U?", HttpStatus.OK, request.getSession());
+			result.setCode(MithrilPlayCode.INVALID_USER);
+			//return new MithrilResponseEntity<String>("WHO ARE U?", HttpStatus.OK, request.getSession());
 		}
-
+		
+		result.setResponseDate(new Date());	
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
 	}
 
 	/**
@@ -160,6 +179,8 @@ public class MemberController {
 	 * 
 	 * @return
 	 */
+	
+	//@PostMapping("/update/")
 	public MithrilResponseEntity<String> updateMemberInfo() {
 		return null;
 	}
@@ -172,7 +193,13 @@ public class MemberController {
 	public MithrilResponseEntity<String> updateMemberDetail() {
 		return null;
 	}
-
+	/**
+	 * 사용자 정보 세션 셋팅 함수 
+	 * @param info
+	 * @param detail
+	 * @param session
+	 * @return
+	 */
 	private UserInfo assignUserSession(MemberInfo info, MemberDetail detail, HttpSession session) {
 
 		UserInfo userInfo = new UserInfo();

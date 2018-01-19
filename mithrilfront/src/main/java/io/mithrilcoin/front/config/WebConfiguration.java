@@ -96,10 +96,13 @@ public class WebConfiguration extends WebMvcConfigurerAdapter {
 
 	@Override
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(interceptor()).addPathPatterns("/**").excludePathPatterns("/health")
-				.excludePathPatterns("/certification", "/certification/*", "/certification/*/**")
+		registry.addInterceptor(interceptor())
+				.addPathPatterns("/**")
+				.excludePathPatterns("/health","/health/*","/health/*/**")
+				.excludePathPatterns("/auth", "/auth/*", "/auth/*/**")
 				.excludePathPatterns("/signin", "/signin/*", "/signin/*/**")
-				.excludePathPatterns("/signup", "/signup/*", "/signup/*/**").excludePathPatterns("/error")
+				.excludePathPatterns("/signup", "/signup/*", "/signup/*/**")
+				.excludePathPatterns("/error")
 		// .addPathPatterns("", "/**/*")
 		// .excludePathPatterns("/resourceRevision/*")
 		// .excludePathPatterns("/health/*")
