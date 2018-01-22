@@ -309,9 +309,18 @@ public class MemberController {
 					if (!"".equals(updateMember.getState())) {
 						// 처리후 삭제
 						redisDataRepo.deleteData("authMail_" + id);
-						UserInfo info = userRedisSessionInfo.getData(id);
+						
+						ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {
+						};
+
+						UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + updateMember.getIdx() + "/",
+								"", ref);
+						
+						String key = hashingUtil.getHashedString(updateMember.getEmail() + userInfo.getDeviceid());
+						
+						UserInfo info = userRedisSessionInfo.getData(key);
 						info.setState(updateMember.getState());
-						userRedisSessionInfo.setData(id, info, 30, TimeUnit.DAYS);
+						userRedisSessionInfo.setData(key, info, 30, TimeUnit.DAYS);
 
 						model.addAttribute("success", "");
 						model.addAttribute("fail", verifyResult);
