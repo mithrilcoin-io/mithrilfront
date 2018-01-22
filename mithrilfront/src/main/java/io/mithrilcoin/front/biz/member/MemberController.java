@@ -335,5 +335,28 @@ public class MemberController {
 		session.setAttribute(userInfo.getId(), info.getEmail());
 		return userInfo;
 	}
+	
+	@GetMapping("/select/userInfo")
+	public MithrilResponseEntity<MithrilApiResult> getMyAccountInfo(HttpServletRequest request)
+	{
+		
+		MithrilApiResult result = new MithrilApiResult();
+		result.setRequestDate(new Date());
+		
+		UserInfo userInfo = request.getSession().getAttribute("userInfo") == null ? null
+				: (UserInfo) request.getSession().getAttribute("userInfo");
+		
+		if(userInfo != null)
+		{
+			result.setCode(MithrilPlayCode.SUCCESS);
+		}
+		else
+		{
+			result.setCode(MithrilPlayCode.INVALID_USER);
+		}
+		result.setResponseDate(new Date());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
+
+	}
 
 }
