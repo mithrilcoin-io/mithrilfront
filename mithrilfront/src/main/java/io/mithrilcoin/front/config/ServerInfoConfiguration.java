@@ -21,6 +21,6 @@ public class ServerInfoConfiguration {
 	}
 
 	public String getMyFullUrl() {
-		return "http://" + getMyhost() + ":" + getMyPort();
+		return "http://" + getMyhost() + getMyPort();
 	}
 }
