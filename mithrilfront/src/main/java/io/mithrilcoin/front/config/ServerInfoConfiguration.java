@@ -17,7 +17,7 @@ public class ServerInfoConfiguration {
 	}
 
 	public String getMyPort() {
-		return env.getProperty("server.port");
+		return env.getProperty("server.servicePort");
 	}
 
 	public String getMyFullUrl() {
