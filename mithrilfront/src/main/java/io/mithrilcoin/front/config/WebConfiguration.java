@@ -105,7 +105,7 @@ public class WebConfiguration extends WebMvcConfigurerAdapter {
 		registry.addInterceptor(interceptor())
 				.addPathPatterns("/**")
 				.excludePathPatterns("/health","/health/*","/health/*/**")
-				.excludePathPatterns("/member/auth", "/member/auth/*", "/member/auth/*/**")
+				.excludePathPatterns("/member/sendmail/auth","/member/sendmail/auth/*")
 				.excludePathPatterns("/member/signin", "/member/signin/*", "/member/signin/*/**")
 				.excludePathPatterns("/member/signup", "/member/signup/*", "/member/signup/*/**")
 				.excludePathPatterns("/error")
