@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class HashingUtil {
 
-	private static final String INIT_SOLT = "playmoreplayaltmflf12)(";
+	private static final String INIT_SALT = "playmoreplayaltmflf12)(";
 	private static final String HASH_ALGORITHM = "SHA-256";
 
 	private MessageDigest messageDigest;
@@ -21,7 +21,7 @@ public class HashingUtil {
 	 * @return
 	 */
 	public String getHashedString(String sourceString) {
-		String mixedString = INIT_SOLT + sourceString;
+		String mixedString = INIT_SALT + sourceString;
 		StringBuilder sb = new StringBuilder();
 		try {
 			messageDigest = MessageDigest.getInstance(HashingUtil.HASH_ALGORITHM);
@@ -37,6 +37,18 @@ public class HashingUtil {
 			e1.printStackTrace();
 		}
 		return sb.toString();
+	}
+	
+	/**
+	 * 
+	 * @param sourceString 해시하고 싶은 문자열
+	 * @param addSolt 추가 넣고 싶은 문자열
+	 * @return
+	 */
+	public String getHashedString(String sourceString, String addSalt)
+	{
+		String mixedString = sourceString + addSalt;
+		return getHashedString(mixedString);
 	}
 
 	public boolean compareRawStringWithHashString(String sourceString, String hashedString) {

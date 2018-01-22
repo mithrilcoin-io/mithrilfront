@@ -24,6 +24,8 @@ public class MailTemplateUtil {
 
 	private String defaultSender;
 
+	private String authTitle = "[MithrilPlay] Confirm your MithrilPlay account, ";
+
 	@PostConstruct
 	public void init() {
 		Resource resource = resourceLoader.getResource("classpath:/email_verify.html");
@@ -37,6 +39,7 @@ public class MailTemplateUtil {
 			br.close();
 			authEmailTemplate = sb.toString();
 			defaultSender = "kei.hwang@mithrilcoin.io";
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -53,6 +56,10 @@ public class MailTemplateUtil {
 
 	public void setDefaultSender(String defaultSender) {
 		this.defaultSender = defaultSender;
+	}
+
+	public String getAuthTitle() {
+		return authTitle;
 	}
 
 }
