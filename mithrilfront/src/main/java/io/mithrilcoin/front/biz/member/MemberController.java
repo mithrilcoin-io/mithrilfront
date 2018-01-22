@@ -69,6 +69,9 @@ public class MemberController {
 	@Autowired
 	private RedisDataRepository<String, String> redisDataRepo;
 
+	@Autowired
+	private RedisDataRepository<String, UserInfo> userRedisSessionInfo;
+
 	/**
 	 * 회원가입
 	 * 
@@ -80,6 +83,7 @@ public class MemberController {
 
 		logger.info("/member/singup/ ");
 		MithrilApiResult result = new MithrilApiResult();
+		String key = "";
 		try {
 			result.setRequestDate(new Date());
 			request.getSession().invalidate();
@@ -87,10 +91,13 @@ public class MemberController {
 			ParameterizedTypeReference<MemberInfo> typeRef = new ParameterizedTypeReference<MemberInfo>() {
 			};
 			MemberInfo memberInfo = mithrilApiTemplate.post("/member/signup/", memberRequest, typeRef);
+
 			// 정상적으로 회원등록완료
 			if (memberInfo != null && memberInfo.getIdx() > 0) {
-				// 세션에 로그인으로 처리
-				assignUserSession(memberInfo, null, request.getSession());
+				// redis에 로그인으로 처리
+
+				key = hashingUtil.getHashedString(memberInfo.getEmail() + memberInfo.getDeviceid());
+				assignUserSession(memberInfo, null, key);
 				result.setCode(MithrilPlayCode.SUCCESS);
 
 			} else // 회원가입 실패
@@ -115,7 +122,7 @@ public class MemberController {
 			e.printStackTrace();
 		}
 		result.setResponseDate(new Date());
-		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, key, userRedisSessionInfo);
 	}
 
 	/**
@@ -130,6 +137,7 @@ public class MemberController {
 		request.getSession().invalidate();
 		MithrilApiResult result = new MithrilApiResult();
 		result.setRequestDate(new Date());
+		String key = "";
 		try {
 			String memberRequest = objMapper.writeValueAsString(member);
 			ParameterizedTypeReference<Member> typeRef = new ParameterizedTypeReference<Member>() {
@@ -143,12 +151,17 @@ public class MemberController {
 
 					UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + findMember.getIdx() + "/",
 							"", ref);
-					userInfo.setId(hashingUtil.getHashedString(findMember.getEmail()));
+
+					key = hashingUtil.getHashedString(findMember.getEmail() + userInfo.getDeviceid());
+					userInfo.setId(key);
 					userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
 					userInfo.setState(findMember.getState());
-					request.getSession().setAttribute("userInfo", userInfo);
+					userRedisSessionInfo.setData(key, userInfo, 30, TimeUnit.DAYS);
+					redisDataRepo.setData("email_" + key, member.getEmail(), 30, TimeUnit.DAYS);
+
+					// request.getSession().setAttribute("userInfo", userInfo);
 					// hash id로 이메일 값 저장
-					request.getSession().setAttribute(userInfo.getId(), findMember.getEmail());
+					// request.getSession().setAttribute(userInfo.getId(), findMember.getEmail());
 					result.setCode(MithrilPlayCode.SUCCESS);
 
 				} else {
@@ -168,7 +181,7 @@ public class MemberController {
 		}
 
 		result.setResponseDate(new Date());
-		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, key, userRedisSessionInfo);
 	}
 
 	/**
@@ -179,15 +192,19 @@ public class MemberController {
 	@PostMapping("/signout/{id}")
 	public MithrilResponseEntity<MithrilApiResult> signOut(@PathVariable String id, HttpServletRequest request) {
 
-		HttpSession session = request.getSession();
-		UserInfo userInfo = session.getAttribute("userInfo") == null ? null
-				: (UserInfo) session.getAttribute("userInfo");
+		// HttpSession session = request.getSession();
+		// UserInfo userInfo = session.getAttribute("userInfo") == null ? null
+		// : (UserInfo) session.getAttribute("userInfo");
+
+		UserInfo userInfo = userRedisSessionInfo.getData(id);
+
 		MithrilApiResult result = new MithrilApiResult();
 		result.setRequestDate(new Date());
 
 		if (userInfo != null && userInfo.getId().equals(id)) {
 			// 세션 정보 클리어
-			request.getSession().invalidate();
+			// request.getSession().invalidate();
+			userRedisSessionInfo.deleteData(id);
 			result.setCode(MithrilPlayCode.SUCCESS);
 		} else {
 			result.setCode(MithrilPlayCode.INVALID_USER);
@@ -196,7 +213,7 @@ public class MemberController {
 		}
 
 		result.setResponseDate(new Date());
-		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, id, userRedisSessionInfo);
 	}
 
 	/**
@@ -230,7 +247,7 @@ public class MemberController {
 		String newHashedString = hashingUtil.getHashedString("authMail_" + id);
 		String emailId = redisDataRepo.getData("authMail_" + newHashedString);
 		if (emailId == null) {
-			String emailAddress = (String) request.getSession().getAttribute(id);
+			String emailAddress = redisDataRepo.getData("email_" + id);
 			Message authMail = new Message();
 			authMail.setSender(mailTemplateUtil.getDefaultSender());
 			authMail.setReceiver(emailAddress);
@@ -263,7 +280,7 @@ public class MemberController {
 		}
 
 		result.setResponseDate(new Date());
-		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, id, userRedisSessionInfo);
 	}
 
 	@GetMapping("/auth/{id}")
@@ -292,6 +309,10 @@ public class MemberController {
 					if (!"".equals(updateMember.getState())) {
 						// 처리후 삭제
 						redisDataRepo.deleteData("authMail_" + id);
+						UserInfo info = userRedisSessionInfo.getData(id);
+						info.setState(updateMember.getState());
+						userRedisSessionInfo.setData(id, info, 30, TimeUnit.DAYS);
+
 						model.addAttribute("success", "");
 						model.addAttribute("fail", verifyResult);
 					} else {
@@ -320,42 +341,41 @@ public class MemberController {
 	 * @param session
 	 * @return
 	 */
-	private UserInfo assignUserSession(MemberInfo info, MemberDetail detail, HttpSession session) {
+	private UserInfo assignUserSession(MemberInfo info, MemberDetail detail, String key) {
 
 		UserInfo userInfo = new UserInfo();
 
 		// hashing 된 고유 아이디 전달
-		userInfo.setId(hashingUtil.getHashedString(info.getEmail()));
+		userInfo.setId(key);
 		userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
 		userInfo.setDeviceid(info.getDeviceid());
 		userInfo.setState(info.getState());
 		userInfo.setMemberDetail(detail);
-		session.setAttribute("userInfo", userInfo);
+		userRedisSessionInfo.setData(key, userInfo, 30, TimeUnit.DAYS);
+		redisDataRepo.setData("email_" + key, info.getEmail(), 30, TimeUnit.DAYS);
+
+		// session.setAttribute("userInfo", userInfo);
 		// hash id로 이메일 값 저장
-		session.setAttribute(userInfo.getId(), info.getEmail());
+		// session.setAttribute(userInfo.getId(), info.getEmail());
 		return userInfo;
 	}
-	
-	@GetMapping("/select/userInfo")
-	public MithrilResponseEntity<MithrilApiResult> getMyAccountInfo(HttpServletRequest request)
-	{
-		
+
+	@GetMapping("/select/userInfo/{id}")
+	public MithrilResponseEntity<MithrilApiResult> getMyAccountInfo(@PathVariable String id) {
+
 		MithrilApiResult result = new MithrilApiResult();
 		result.setRequestDate(new Date());
-		
-		UserInfo userInfo = request.getSession().getAttribute("userInfo") == null ? null
-				: (UserInfo) request.getSession().getAttribute("userInfo");
-		
-		if(userInfo != null)
-		{
+
+		UserInfo userInfo = userRedisSessionInfo.getData(id);
+
+		if (userInfo != null) {
 			result.setCode(MithrilPlayCode.SUCCESS);
-		}
-		else
-		{
+		} else {
 			result.setCode(MithrilPlayCode.INVALID_USER);
 		}
+
 		result.setResponseDate(new Date());
-		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, id, userRedisSessionInfo);
 
 	}
 

@@ -27,6 +27,7 @@ public class WelcomeContorller {
 		acc.setAlias("ffsdfds");
 		acc.setMember_idx(234342234);
 		acc.setType("sd9f8sd98f");
-		return new MithrilResponseEntity<Account>(acc, HttpStatus.OK, session);
+	//	return new MithrilResponseEntity<Account>(acc, HttpStatus.OK, session);
+		return null;
 	}
 }

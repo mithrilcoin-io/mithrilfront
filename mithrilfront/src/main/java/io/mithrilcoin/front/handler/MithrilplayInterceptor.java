@@ -3,21 +3,30 @@ package io.mithrilcoin.front.handler;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import io.mithril.vo.member.UserInfo;
+import io.mithrilcoin.front.common.redis.RedisDataRepository;
 
 @Component
 public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 
+	@Autowired
+	private RedisDataRepository<String, UserInfo> userInforedis;
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
-		UserInfo userInfo = request.getSession().getAttribute("userInfo") == null ? null
-				: (UserInfo) request.getSession().getAttribute("userInfo");
-
+		
+		String[] urls = request.getRequestURI().split("/");
+		String key = urls[urls.length - 1];
+		
+		UserInfo userInfo  = userInforedis.getData(key);
+//		UserInfo userInfo = request.getSession().getAttribute("userInfo") == null ? null
+//				: (UserInfo) request.getSession().getAttribute("userInfo");
+//
 		if (userInfo == null) {
 			response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없습니다.");
 			return false;
