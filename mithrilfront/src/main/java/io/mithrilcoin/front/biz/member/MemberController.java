@@ -226,39 +226,42 @@ public class MemberController {
 
 		MithrilApiResult result = new MithrilApiResult();
 		result.setRequestDate(new Date());
-		// 날짜 밀리세컨드 기준으로 새로운 해쉬 키 생성 
-		String newHashedString = hashingUtil.getHashedString(id, dateUtil.date2String(new Date(),"yyyy-MM-dd HH:mm:ss.SSS"));
-		
-		
-		String emailAddress = (String) request.getSession().getAttribute(id);
-		Message authMail = new Message();
-		authMail.setSender(mailTemplateUtil.getDefaultSender());
-		authMail.setReceiver(emailAddress);
-		authMail.setBody(mailTemplateUtil.getAuthMailBody(serverInfo.getMyFullUrl() + "/member/auth/" + newHashedString));
-		authMail.setState("M002001");
-		authMail.setTypecode("T001001");
-		authMail.setTitle(mailTemplateUtil.getAuthTitle() + emailAddress);
-		// authMail.setBody(body);
 
-		try {
-			String mailParam = objMapper.writeValueAsString(authMail);
-			ParameterizedTypeReference<Message> typeRef = new ParameterizedTypeReference<Message>() {
-			};
-			Message resultMessage = mithrilApiTemplate.post("/message/send", mailParam, typeRef);
-			if (resultMessage != null && "M002003".equals(resultMessage.getState())) {
-				result.setCode(MithrilPlayCode.SUCCESS);
-				//24 시간 동안만 유효한 코드 생성 
-				redisDataRepo.setData("authMail_" + newHashedString, emailAddress, 24, TimeUnit.HOURS);
-			}
-			else
-			{
-				result.setCode(MithrilPlayCode.API_FAIL);
-			}
+		String newHashedString = hashingUtil.getHashedString("authMail_" + id);
+		String emailId = redisDataRepo.getData("authMail_" + newHashedString);
+		if (emailId == null) {
+			String emailAddress = (String) request.getSession().getAttribute(id);
+			Message authMail = new Message();
+			authMail.setSender(mailTemplateUtil.getDefaultSender());
+			authMail.setReceiver(emailAddress);
+			authMail.setBody(
+					mailTemplateUtil.getAuthMailBody(serverInfo.getMyFullUrl() + "/member/auth/" + newHashedString));
+			authMail.setState("M002001");
+			authMail.setTypecode("T001001");
+			authMail.setTitle(mailTemplateUtil.getAuthTitle() + emailAddress);
+			// authMail.setBody(body);
 
-		} catch (Exception e) {
-			result.setCode(MithrilPlayCode.API_ERROR);
-			e.printStackTrace();
+			try {
+				String mailParam = objMapper.writeValueAsString(authMail);
+				ParameterizedTypeReference<Message> typeRef = new ParameterizedTypeReference<Message>() {
+				};
+				Message resultMessage = mithrilApiTemplate.post("/message/send", mailParam, typeRef);
+				if (resultMessage != null && "M002003".equals(resultMessage.getState())) {
+					result.setCode(MithrilPlayCode.SUCCESS);
+					// 24 시간 동안만 유효한 코드 생성
+					redisDataRepo.setData("authMail_" + newHashedString, emailAddress, 24, TimeUnit.HOURS);
+				} else {
+					result.setCode(MithrilPlayCode.API_FAIL);
+				}
+
+			} catch (Exception e) {
+				result.setCode(MithrilPlayCode.API_ERROR);
+				e.printStackTrace();
+			}
+		} else {
+			result.setCode(MithrilPlayCode.ALREADY_SENDED);
 		}
+
 		result.setResponseDate(new Date());
 		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, request.getSession());
 	}
@@ -266,43 +269,46 @@ public class MemberController {
 	@GetMapping("/auth/{id}")
 	public String authorizeMemberMail(@PathVariable String id, Model model) {
 		String emailId = redisDataRepo.getData("authMail_" + id);
-		
 		String verifyResult = "display: none;";
 
 		model.addAttribute("success", verifyResult);
 		model.addAttribute("duplicate", verifyResult);
-		model.addAttribute("fail", verifyResult);
-		
-		// 정상적으로 생성된 아이디를 가져왔을 경우 
-		if( emailId != null)
-		{
-			Member member = new Member();
-			member.setEmail(emailId);
-			String memberRequest;
+		model.addAttribute("fail", "");
+
+		// 정상적으로 생성된 아이디를 가져왔을 경우
+		if (emailId != null) {
+
 			try {
+				Member member = new Member();
+				member.setEmail(emailId);
+				String memberRequest;
 				memberRequest = objMapper.writeValueAsString(member);
-				ParameterizedTypeReference<MemberInfo> typeRef = new ParameterizedTypeReference<MemberInfo>() {
+				ParameterizedTypeReference<Member> typeRef = new ParameterizedTypeReference<Member>() {
 				};
 				Member updateMember = mithrilApiTemplate.post("/member/authorize/", memberRequest, typeRef);
-				
-				if( updateMember != null)
-				{
-					//처리후 삭제 
-					redisDataRepo.deleteData("authMail_" + id);
-				}
-				else
-				{
+
+				if (updateMember != null) {
+
+					if (!"".equals(updateMember.getState())) {
+						// 처리후 삭제
+						redisDataRepo.deleteData("authMail_" + id);
+						model.addAttribute("success", "");
+						model.addAttribute("fail", verifyResult);
+					} else {
+						model.addAttribute("duplicate", "");
+						model.addAttribute("fail", verifyResult);
+					}
+
+				} else {
 					model.addAttribute("fail", "");
 				}
-				
-				
+
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		
-		
+
 		return "member/emailLanding";
 	}
 
