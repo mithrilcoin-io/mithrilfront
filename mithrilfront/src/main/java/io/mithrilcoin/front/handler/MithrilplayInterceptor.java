@@ -24,9 +24,7 @@ public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 		String key = urls[urls.length - 1];
 		
 		UserInfo userInfo  = userInforedis.getData(key);
-//		UserInfo userInfo = request.getSession().getAttribute("userInfo") == null ? null
-//				: (UserInfo) request.getSession().getAttribute("userInfo");
-//
+
 		if (userInfo == null) {
 			response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없습니다.");
 			return false;

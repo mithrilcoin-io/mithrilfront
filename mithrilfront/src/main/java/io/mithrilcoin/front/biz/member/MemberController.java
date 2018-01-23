@@ -1,6 +1,8 @@
 package io.mithrilcoin.front.biz.member;
 
+import java.net.URLEncoder;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLEngineResult.Status;
@@ -40,6 +42,7 @@ import io.mithrilcoin.front.response.MithrilResponseEntity;
 import io.mithrilcoin.front.util.DateUtil;
 import io.mithrilcoin.front.util.HashingUtil;
 import io.mithrilcoin.front.util.MailTemplateUtil;
+import io.mithrilcoin.front.util.ParameterChanger;
 
 @Controller
 @RequestMapping("/member")
@@ -205,6 +208,7 @@ public class MemberController {
 			// 세션 정보 클리어
 			// request.getSession().invalidate();
 			userRedisSessionInfo.deleteData(id);
+			redisDataRepo.deleteData("email_" + id);
 			result.setCode(MithrilPlayCode.SUCCESS);
 		} else {
 			result.setCode(MithrilPlayCode.INVALID_USER);
@@ -232,10 +236,53 @@ public class MemberController {
 	 * 
 	 * @return
 	 */
-
 	@PostMapping("/update/memberDetail/{id}")
-	public MithrilResponseEntity<MithrilApiResult> updateMemberDetail() {
-		return null;
+	public MithrilResponseEntity<MithrilApiResult> updateMemberDetail(@PathVariable String id,
+			@RequestBody MemberDetail memberDetail) {
+
+		MithrilApiResult result = new MithrilApiResult();
+		result.setRequestDate(new Date());
+		try {
+
+			String email = redisDataRepo.getData("email_" + id);
+
+			MemberInfo member = new MemberInfo();
+			member.setEmail(email);
+
+			ParameterizedTypeReference<Member> ref = new ParameterizedTypeReference<Member>() {};
+			Map<String,String> paramMap = ParameterChanger.extractFieldNameValueMap(MemberInfo.class, member);
+			String memberString = ParameterChanger.urlEncodeUTF8(paramMap);
+			 
+			Member findMember = mithrilApiTemplate.get("/member/select/", memberString, ref);
+			if (findMember.getIdx() > 0) {
+				memberDetail.setMember_idx(findMember.getIdx());
+				ParameterizedTypeReference<MemberDetail> typeref = new ParameterizedTypeReference<MemberDetail>() {};
+				String detailParam = objMapper.writeValueAsString(memberDetail);
+				MemberDetail resultDetail = mithrilApiTemplate.post("/member/update/memberdetail", detailParam, typeref);
+				
+				if( resultDetail.getIdx() > 0)
+				{
+					UserInfo info = userRedisSessionInfo.getData(id);
+					info.setMemberDetail(resultDetail);
+					info.setState("M001003");
+					userRedisSessionInfo.setData(id, info, 30 , TimeUnit.DAYS);
+				}
+				else
+				{
+					result.setCode(MithrilPlayCode.API_FAIL);
+				}
+				
+			} else {
+				result.setCode(MithrilPlayCode.NOT_FOUND);
+			}
+
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+			result.setCode(MithrilPlayCode.API_ERROR);
+
+		}
+		result.setResponseDate(new Date());
+		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, id, userRedisSessionInfo);
 	}
 
 	@PostMapping("/sendmail/auth/{id}")
@@ -309,15 +356,15 @@ public class MemberController {
 					if (!"".equals(updateMember.getState())) {
 						// 처리후 삭제
 						redisDataRepo.deleteData("authMail_" + id);
-						
+
 						ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {
 						};
 
-						UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + updateMember.getIdx() + "/",
-								"", ref);
-						
+						UserInfo userInfo = mithrilApiTemplate
+								.get("/member/select/userInfo/" + updateMember.getIdx() + "/", "", ref);
+
 						String key = hashingUtil.getHashedString(updateMember.getEmail() + userInfo.getDeviceid());
-						
+
 						UserInfo info = userRedisSessionInfo.getData(key);
 						info.setState(updateMember.getState());
 						userRedisSessionInfo.setData(key, info, 30, TimeUnit.DAYS);
@@ -373,6 +420,7 @@ public class MemberController {
 	public MithrilResponseEntity<MithrilApiResult> getMyAccountInfo(@PathVariable String id) {
 
 		MithrilApiResult result = new MithrilApiResult();
+
 		result.setRequestDate(new Date());
 
 		UserInfo userInfo = userRedisSessionInfo.getData(id);
