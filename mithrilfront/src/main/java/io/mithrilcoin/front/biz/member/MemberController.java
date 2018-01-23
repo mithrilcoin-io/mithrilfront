@@ -266,6 +266,7 @@ public class MemberController {
 					info.setMemberDetail(resultDetail);
 					info.setState("M001003");
 					userRedisSessionInfo.setData(id, info, 30 , TimeUnit.DAYS);
+					result.setCode(MithrilPlayCode.SUCCESS);
 				}
 				else
 				{
