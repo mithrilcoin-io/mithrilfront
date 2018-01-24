@@ -1,5 +1,6 @@
 package io.mithrilcoin.front.biz.member;
 
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,7 @@ import io.mithril.vo.member.MemberDetail;
 import io.mithril.vo.member.MemberInfo;
 import io.mithril.vo.member.UserInfo;
 import io.mithril.vo.message.Message;
+import io.mithril.vo.mtp.MtpTotal;
 import io.mithrilcoin.front.common.redis.RedisDataRepository;
 import io.mithrilcoin.front.common.rest.IRestTemplate;
 import io.mithrilcoin.front.config.ServerInfoConfiguration;
@@ -155,8 +157,17 @@ public class MemberController {
 					userInfo.setId(key);
 					userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
 					userInfo.setState(findMember.getState());
+					
+					ParameterizedTypeReference<MtpTotal> tref = new ParameterizedTypeReference<MtpTotal>() {
+					};
+					String encodeEmail = URLEncoder.encode(member.getEmail(), "UTF-8");
+					MtpTotal total = mithrilApiTemplate.get("/mtp/select/" + encodeEmail, "", tref);
+					userInfo.setMtptotal(total);
 					userRedisSessionInfo.setData(key, userInfo, 30, TimeUnit.DAYS);
 					redisDataRepo.setData("email_" + key, member.getEmail(), 30, TimeUnit.DAYS);
+					
+					
+					
 
 					// request.getSession().setAttribute("userInfo", userInfo);
 					// hash id로 이메일 값 저장
