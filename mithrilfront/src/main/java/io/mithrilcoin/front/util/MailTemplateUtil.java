@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.tomcat.util.bcel.classfile.Constant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;

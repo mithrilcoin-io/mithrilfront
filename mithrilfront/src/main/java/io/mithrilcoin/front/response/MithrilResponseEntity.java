@@ -2,8 +2,6 @@ package io.mithrilcoin.front.response;
 
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.http.HttpSession;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -20,7 +18,7 @@ import io.mithrilcoin.front.common.redis.RedisDataRepository;
  *            body로 맵핑 되서 전달되는 객체 T type
  */
 public class MithrilResponseEntity<T> extends ResponseEntity<T> {
-
+	
 	public MithrilResponseEntity(T body, HttpStatus status, String id, RedisDataRepository<String, UserInfo> redisSession) {
 		super(setBody(body, redisSession, id), status);
 	}
@@ -32,11 +30,22 @@ public class MithrilResponseEntity<T> extends ResponseEntity<T> {
 		
 		if(userInfo != null && !"".equals(id))
 		{
+			if(userInfo.getMemberDetail() != null)
+			{
+				userInfo.getMemberDetail().setIdx(0);
+				userInfo.getMemberDetail().setMember_idx(0);
+			}
+			if( userInfo.getMtptotal() != null)
+			{
+				userInfo.getMtptotal().setMember_idx(0);
+			}
 			response.setUserInfo(userInfo);
+			
 			// data expire time 갱신 
 			redisSession.setData(id, userInfo, 30, TimeUnit.DAYS);
 		}
 		return (T) response;
 	}
+	
 
 }

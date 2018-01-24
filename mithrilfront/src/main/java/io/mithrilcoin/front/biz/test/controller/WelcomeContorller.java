@@ -2,7 +2,6 @@ package io.mithrilcoin.front.biz.test.controller;
 
 import javax.servlet.http.HttpSession;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
