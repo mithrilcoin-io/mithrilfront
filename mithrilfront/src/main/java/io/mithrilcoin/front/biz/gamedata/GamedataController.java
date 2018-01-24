@@ -1,6 +1,7 @@
 package io.mithrilcoin.front.biz.gamedata;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
@@ -42,7 +43,7 @@ public class GamedataController {
 
 	@Autowired
 	private RedisDataRepository<String, UserInfo> userRedisSessionInfo;
-	
+
 	@Autowired
 	private RedisDataRepository<String, String> redisdataRepo;
 
@@ -50,7 +51,8 @@ public class GamedataController {
 	public MithrilResponseEntity<ArrayList<Playstoreappinfo>> filteringGameApp(
 			@RequestBody ArrayList<Playstoreappinfo> applist, @PathVariable String id) throws Exception {
 		String applistParam = objMapper.writeValueAsString(applist);
-		ParameterizedTypeReference<ArrayList<Playstoreappinfo>> typeRef = new ParameterizedTypeReference<ArrayList<Playstoreappinfo>>() {};
+		ParameterizedTypeReference<ArrayList<Playstoreappinfo>> typeRef = new ParameterizedTypeReference<ArrayList<Playstoreappinfo>>() {
+		};
 		ArrayList<Playstoreappinfo> result = mithrilApiTemplate.post("/gamedata/validate", applistParam, typeRef);
 
 		return new MithrilResponseEntity<ArrayList<Playstoreappinfo>>(result, HttpStatus.OK, id, userRedisSessionInfo);
@@ -59,16 +61,35 @@ public class GamedataController {
 	@PostMapping("/insert/{id}")
 	public MithrilResponseEntity<ArrayList<TemporalPlayData>> insertPlayData(
 			@RequestBody ArrayList<TemporalPlayData> playdatalist, @PathVariable String id) throws Exception {
-		
+
 		String email = redisdataRepo.getData("email_" + id);
 		email = URLEncoder.encode(email, "UTF-8");
-		
+
 		String datalistParam = objMapper.writeValueAsString(playdatalist);
-		ParameterizedTypeReference<ArrayList<TemporalPlayData>> typeRef = new ParameterizedTypeReference<ArrayList<TemporalPlayData>>() {};
-		
-		ArrayList<TemporalPlayData> resultlist = mithrilApiTemplate.post("/gamedata/insert/" + email, datalistParam, typeRef);
-		
-		return  new MithrilResponseEntity<ArrayList<TemporalPlayData>>(resultlist, HttpStatus.OK, id, userRedisSessionInfo);
+		ParameterizedTypeReference<ArrayList<TemporalPlayData>> typeRef = new ParameterizedTypeReference<ArrayList<TemporalPlayData>>() {
+		};
+
+		ArrayList<TemporalPlayData> resultlist = mithrilApiTemplate.post("/gamedata/insert/" + email, datalistParam,
+				typeRef);
+
+		return new MithrilResponseEntity<ArrayList<TemporalPlayData>>(resultlist, HttpStatus.OK, id,
+				userRedisSessionInfo);
+	}
+
+	@PostMapping("/insert/reward/{id}")
+	public MithrilResponseEntity<TemporalPlayData> insertPlaydataReward(@RequestBody TemporalPlayData playdata,
+			@PathVariable String id) throws Exception {
+		if (playdata.getIdx() < 1) {
+			return new MithrilResponseEntity<TemporalPlayData>(playdata, HttpStatus.OK, id, userRedisSessionInfo);
+		}
+		String email = redisdataRepo.getData("email_" + id);
+		email = URLEncoder.encode(email, "UTF-8");
+		String playdataParam = objMapper.writeValueAsString(playdata);
+		ParameterizedTypeReference<TemporalPlayData> typeRef = new ParameterizedTypeReference<TemporalPlayData>() {
+		};
+		TemporalPlayData result = mithrilApiTemplate.post("/gamedata/insert/reward/" + email, playdataParam, typeRef);
+
+		return new MithrilResponseEntity<TemporalPlayData>(result, HttpStatus.OK, id, userRedisSessionInfo);
 	}
 
 }
