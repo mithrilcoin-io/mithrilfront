@@ -105,6 +105,10 @@
 			<version>4.6.1</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			 <groupId>org.springframework.mobile</groupId>
+			 <artifactId>spring-mobile-device</artifactId>
+	 	</dependency>
 		
 	</dependencies>
 
