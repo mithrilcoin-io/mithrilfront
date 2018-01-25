@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
+import org.springframework.mobile.device.Device;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -339,14 +340,19 @@ public class MemberController {
 	}
 
 	@GetMapping("/auth/{id}")
-	public String authorizeMemberMail(@PathVariable String id, Model model) {
+	public String authorizeMemberMail(@PathVariable String id, Model model, Device device) {
 		String emailId = redisDataRepo.getData("authMail_" + id);
 		String verifyResult = "display: none;";
 
 		model.addAttribute("success", verifyResult);
 		model.addAttribute("duplicate", verifyResult);
+		model.addAttribute("backApp", "");
+		if(device.isNormal())
+		{
+			model.addAttribute("backApp", verifyResult);
+		}
 		model.addAttribute("fail", "");
-
+	   
 		// 정상적으로 생성된 아이디를 가져왔을 경우
 		if (emailId != null) {
 
@@ -427,6 +433,7 @@ public class MemberController {
 	@GetMapping("/select/userInfo/{id}")
 	public MithrilResponseEntity<MithrilApiResult> getMyAccountInfo(@PathVariable String id) {
 
+		
 		MithrilApiResult result = new MithrilApiResult();
 
 		result.setRequestDate(new Date());

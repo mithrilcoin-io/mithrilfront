@@ -2,6 +2,7 @@ package io.mithrilcoin.front.biz.test.controller;
 
 import javax.servlet.http.HttpSession;
 
+import org.springframework.mobile.device.Device;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -13,7 +14,7 @@ import io.mithrilcoin.front.response.MithrilResponseEntity;
 public class WelcomeContorller {
 
 	@RequestMapping("/hello")
-	public String getWelcome()
+	public String getWelcome(Device device)
 	{
 		
 		return "welcome";

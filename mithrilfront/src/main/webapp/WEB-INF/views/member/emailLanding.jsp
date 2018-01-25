@@ -121,6 +121,7 @@ html,body {
         </svg>
         <div class="verify_title">이메일 인증 성공</div>
         <div class="verify_desc">미스릴 플레이 앱에서 <strong>인증완료</strong> 버튼을 눌러 회원가입을 완료하세요</div>
+        <div id="btn_go_app" class="btn_go_app" style="${backApp}"><a href="mirhrilplay://emailcheck">앱으로 돌아가기</a></div>
       </div>
 
       <!-- 인증 중복 -->
