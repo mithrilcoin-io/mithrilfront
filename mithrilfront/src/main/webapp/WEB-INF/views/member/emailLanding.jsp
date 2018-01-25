@@ -105,6 +105,18 @@ html,body {
 .verify_box.fail .verify_title {
   color:#ff4138;
 }
+.btn_go_app {
+	width:200px;
+	margin:20px auto 0;
+}
+.btn_go_app a{
+	display: block;
+	text-decoration: none;
+	color:#fff;
+	padding: 8px 0;
+	border-radius: 4px;
+	background-color:#3E55FF; 
+}
 
   </style>
   
