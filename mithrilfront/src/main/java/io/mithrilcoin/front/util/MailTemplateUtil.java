@@ -37,7 +37,7 @@ public class MailTemplateUtil {
 			}
 			br.close();
 			authEmailTemplate = sb.toString();
-			defaultSender = "MITHRIL PLAY";
+			defaultSender = "mithrilcoin.dev@gmail.com";
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
