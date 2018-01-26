@@ -133,7 +133,7 @@ public class MemberController {
 	 * @return
 	 */
 	@PostMapping("/signin")
-	public MithrilResponseEntity<MithrilApiResult> signIn(@RequestBody @Valid Member member,
+	public MithrilResponseEntity<MithrilApiResult> signIn(@RequestBody @Valid MemberInfo member,
 			HttpServletRequest request) {
 		logger.info("/member/signin/ ");
 		request.getSession().invalidate();
@@ -147,13 +147,31 @@ public class MemberController {
 			Member findMember = mithrilApiTemplate.post("/member/signin/", memberRequest, typeRef);
 			if (findMember != null) {
 				if (findMember.getIdx() > 0) {
+					ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {};
 
-					ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {
-					};
-
-					UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + findMember.getIdx() + "/",
-							"", ref);
-
+					UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + findMember.getIdx() + "/","", ref);
+					// 다른기기에서 로그인 함. 
+					if( userInfo.getDeviceid() != member.getDeviceid())
+					{
+						String oldKey = hashingUtil.getHashedString(findMember.getEmail() + userInfo.getDeviceid());
+						// 기존 기기의 세션 
+						if(userRedisSessionInfo.getData(oldKey) != null)
+						{
+							// 기존 세션 널처리 24시간 뒤에 삭제 
+							userRedisSessionInfo.setData(oldKey, null, 24,TimeUnit.HOURS);
+							redisDataRepo.setData("email_" + oldKey, null, 24,TimeUnit.HOURS);
+							io.mithril.vo.member.Device device = new io.mithril.vo.member.Device();
+							device.setMember_idx(findMember.getIdx());
+							device.setDeviceid(member.getDeviceid());
+							String param = objMapper.writeValueAsString(device);
+							ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
+							io.mithril.vo.member.Device resultDevice = mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
+						}
+						
+						// 디바이스 아이디 변경 
+						userInfo.setDeviceid(member.getDeviceid());
+					}
+					// 새로운 키 생성 
 					key = hashingUtil.getHashedString(findMember.getEmail() + userInfo.getDeviceid());
 					userInfo.setId(key);
 					userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
@@ -167,9 +185,6 @@ public class MemberController {
 					userInfo.setMtptotal(total);
 					userRedisSessionInfo.setData(key, userInfo, 30, TimeUnit.DAYS);
 					redisDataRepo.setData("email_" + key, member.getEmail(), 30, TimeUnit.DAYS);
-					
-					
-					
 
 					// request.getSession().setAttribute("userInfo", userInfo);
 					// hash id로 이메일 값 저장

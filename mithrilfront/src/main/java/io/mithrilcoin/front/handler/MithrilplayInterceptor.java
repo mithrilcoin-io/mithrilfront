@@ -39,15 +39,22 @@ public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 
 		String[] urls = request.getRequestURI().split("/");
 		String key = urls[urls.length - 1];
-
-		UserInfo userInfo = userInforedis.getData(key);
-
-		if (userInfo == null) {
+		
+		if(userInforedis.hasContainKey(key))
+		{
+			UserInfo userInfo = userInforedis.getData(key);
+			if (userInfo == null) {
+				response.sendError(HttpServletResponse.SC_CONFLICT, "다른 기기에서 로그인 되었습니다.");
+				return false;
+			}
+			userInfo = updatePersonalMTP(key, userInfo);
+			userInforedis.setData(key, userInfo, 30, TimeUnit.DAYS);
+		}
+		else
+		{
 			response.sendError(HttpServletResponse.SC_FORBIDDEN, "권한이 없습니다.");
 			return false;
 		}
-		userInfo = updatePersonalMTP(key, userInfo);
-		userInforedis.setData(key, userInfo, 30, TimeUnit.DAYS);
 
 		return true;
 	}
