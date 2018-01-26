@@ -151,7 +151,7 @@ public class MemberController {
 
 					UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + findMember.getIdx() + "/","", ref);
 					// 다른기기에서 로그인 함. 
-					if( userInfo.getDeviceid() != member.getDeviceid())
+					if( !userInfo.getDeviceid().equals(member.getDeviceid()))
 					{
 						String oldKey = hashingUtil.getHashedString(findMember.getEmail() + userInfo.getDeviceid());
 						// 기존 기기의 세션 
@@ -160,14 +160,14 @@ public class MemberController {
 							// 기존 세션 널처리 24시간 뒤에 삭제 
 							userRedisSessionInfo.setData(oldKey, null, 24,TimeUnit.HOURS);
 							redisDataRepo.setData("email_" + oldKey, null, 24,TimeUnit.HOURS);
-							io.mithril.vo.member.Device device = new io.mithril.vo.member.Device();
-							device.setMember_idx(findMember.getIdx());
-							device.setDeviceid(member.getDeviceid());
-							String param = objMapper.writeValueAsString(device);
-							ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
-							io.mithril.vo.member.Device resultDevice = mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
 						}
-						
+						io.mithril.vo.member.Device device = new io.mithril.vo.member.Device();
+						device.setMember_idx(findMember.getIdx());
+						device.setDeviceid(member.getDeviceid());
+						String param = objMapper.writeValueAsString(device);
+						ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
+						io.mithril.vo.member.Device resultDevice = mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
+				
 						// 디바이스 아이디 변경 
 						userInfo.setDeviceid(member.getDeviceid());
 					}
