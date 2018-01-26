@@ -158,6 +158,7 @@ public class MemberController {
 					userInfo.setId(key);
 					userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
 					userInfo.setState(findMember.getState());
+					userInfo.setAuthdate(findMember.getAuthdate());
 					
 					ParameterizedTypeReference<MtpTotal> tref = new ParameterizedTypeReference<MtpTotal>() {
 					};
@@ -381,6 +382,7 @@ public class MemberController {
 
 						UserInfo info = userRedisSessionInfo.getData(key);
 						info.setState(updateMember.getState());
+						info.setAuthdate(updateMember.getAuthdate());
 						userRedisSessionInfo.setData(key, info, 30, TimeUnit.DAYS);
 
 						model.addAttribute("success", "");
