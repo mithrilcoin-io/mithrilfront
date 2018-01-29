@@ -22,7 +22,7 @@
 		</rollingPolicy>
   </appender>
   
-  <logger name="org.springframework.cache" level="trace">
+ <!--  <logger name="org.springframework.cache" level="trace">
      <appender-ref ref="STDOUT" />
      <appender-ref ref="FILE" />
   </logger>
@@ -34,7 +34,7 @@
   <logger name="kr.co.finy.cashcharge.common.redis" level="trace">
   	  <appender-ref ref="STDOUT" />
          <appender-ref ref="FILE" />
-  </logger>
+  </logger> -->
   <root level="DEBUG">
     <appender-ref ref="STDOUT" />
     <appender-ref ref="FILE" />
