@@ -167,16 +167,23 @@ public class MemberController {
 						String param = objMapper.writeValueAsString(device);
 						ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
 						io.mithril.vo.member.Device resultDevice = mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
-				
+						
 						// 디바이스 아이디 변경 
 						userInfo.setDeviceid(member.getDeviceid());
 					}
 					// 새로운 키 생성 
 					key = hashingUtil.getHashedString(findMember.getEmail() + userInfo.getDeviceid());
 					userInfo.setId(key);
-					userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
+				
+					//userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
+					String now = dateUtil.getUTCNow();
+					userInfo.setRecentLoginTime(now);
 					userInfo.setState(findMember.getState());
 					userInfo.setAuthdate(findMember.getAuthdate());
+					findMember.setRecentlogindate(now);
+					String memberParam = objMapper.writeValueAsString(findMember);
+					ParameterizedTypeReference<Member> memref = new ParameterizedTypeReference<Member>() {};
+					findMember = mithrilApiTemplate.post("/member/update/loginTime/", memberParam, memref);
 					
 					ParameterizedTypeReference<MtpTotal> tref = new ParameterizedTypeReference<MtpTotal>() {
 					};
@@ -434,10 +441,10 @@ public class MemberController {
 
 		// hashing 된 고유 아이디 전달
 		userInfo.setId(key);
-		userInfo.setRecentLoginTime(dateUtil.date2String(new Date(), "yyyy-MM-dd HH:mm:ss"));
 		userInfo.setDeviceid(info.getDeviceid());
 		userInfo.setState(info.getState());
 		userInfo.setMemberDetail(detail);
+		userInfo.setRecentLoginTime(info.getRecentlogindate());
 		userRedisSessionInfo.setData(key, userInfo, 30, TimeUnit.DAYS);
 		redisDataRepo.setData("email_" + key, info.getEmail(), 30, TimeUnit.DAYS);
 
