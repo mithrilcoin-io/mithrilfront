@@ -1,6 +1,5 @@
 package io.mithrilcoin.front.biz.gamedata;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 

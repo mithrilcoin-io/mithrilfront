@@ -166,7 +166,7 @@ public class MemberController {
 						device.setDeviceid(member.getDeviceid());
 						String param = objMapper.writeValueAsString(device);
 						ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
-						io.mithril.vo.member.Device resultDevice = mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
+						mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
 						
 						// 디바이스 아이디 변경 
 						userInfo.setDeviceid(member.getDeviceid());
