@@ -18,7 +18,7 @@ import io.mithrilcoin.front.common.redis.RedisDataRepository;
  *            body로 맵핑 되서 전달되는 객체 T type
  */
 public class MithrilResponseEntity<T> extends ResponseEntity<T> {
-	
+	public static final long VALID_PLAY_TIME = 60000;
 	public MithrilResponseEntity(T body, HttpStatus status, String id, RedisDataRepository<String, UserInfo> redisSession) {
 		super(setBody(body, redisSession, id), status);
 	}
@@ -39,6 +39,7 @@ public class MithrilResponseEntity<T> extends ResponseEntity<T> {
 			{
 				userInfo.getMtptotal().setMember_idx(0);
 			}
+			userInfo.setValidtime(MithrilResponseEntity.VALID_PLAY_TIME);
 			response.setUserInfo(userInfo);
 			
 			// data expire time 갱신 

@@ -18,7 +18,7 @@ import io.mithril.vo.common.ApiAccessInfo;
 
 /**
  * 
- * ssocioliving api access rest-template
+ * api access rest-template
  * 
  * @author Kei
  *
