@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
 
 /**
  * REDIS 저장용 JSON <-> Object 직렬화처리 클래스 
- * @author jongkuni@danalssocio.com
+ * @author kei.hwang
  *
  */
 public class JsonRedisSerializer implements RedisSerializer<Object> {
