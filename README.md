@@ -1,8 +1,8 @@
 # Mithrilfront
 
-Mithril Play front-end service is WAS. This Web application is designed for communcate Mithril Play API server. 
-MithrilPlay App connect this application first and get authrized token from API server. 
-App application require their own authrized hash token for response from API server. 
+Mithril Play front-end service is WAS. This Web application is designed to communcate Mithril Play API server.  
+Mithril Play App connects this application first and get authorized token from API server.   
+App application requires their own authorized hash token for response from API server.   
 
 >Mithril front-end server Environment
 
