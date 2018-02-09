@@ -325,7 +325,7 @@ public class MemberController {
 
 		String newHashedString = hashingUtil.getHashedString("authMail_" + id);
 		String emailId = redisDataRepo.getData("authMail_" + newHashedString);
-		if (emailId == null) {
+		//if (emailId == null) {
 			String emailAddress = redisDataRepo.getData("email_" + id);
 			Message authMail = new Message();
 			authMail.setSender(mailTemplateUtil.getDefaultSender());
@@ -345,7 +345,7 @@ public class MemberController {
 				if (resultMessage != null && "M002003".equals(resultMessage.getState())) {
 					result.setCode(MithrilPlayCode.SUCCESS);
 					// 24 시간 동안만 유효한 코드 생성
-					redisDataRepo.setData("authMail_" + newHashedString, emailAddress, 24, TimeUnit.HOURS);
+					//redisDataRepo.setData("authMail_" + newHashedString, emailAddress, 24, TimeUnit.HOURS);
 				} else {
 					result.setCode(MithrilPlayCode.API_FAIL);
 				}
@@ -354,9 +354,9 @@ public class MemberController {
 				result.setCode(MithrilPlayCode.API_ERROR);
 				e.printStackTrace();
 			}
-		} else {
-			result.setCode(MithrilPlayCode.ALREADY_SENDED);
-		}
+//		} else {
+//			result.setCode(MithrilPlayCode.ALREADY_SENDED);
+//		}
 
 		result.setResponseDate(new Date());
 		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, id, userRedisSessionInfo);
