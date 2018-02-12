@@ -164,12 +164,25 @@ public class MemberController {
 						io.mithril.vo.member.Device device = new io.mithril.vo.member.Device();
 						device.setMember_idx(findMember.getIdx());
 						device.setDeviceid(member.getDeviceid());
+						device.setFcmid(member.getFcmid());
 						String param = objMapper.writeValueAsString(device);
 						ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
 						mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
 						
 						// 디바이스 아이디 변경 
 						userInfo.setDeviceid(member.getDeviceid());
+					}
+					if(userInfo.getFcmid() == null || !userInfo.getFcmid().equals(member.getFcmid()))
+					{
+						io.mithril.vo.member.Device device = new io.mithril.vo.member.Device();
+						device.setMember_idx(findMember.getIdx());
+						device.setDeviceid(member.getDeviceid());
+						device.setFcmid(member.getFcmid());
+						String param = objMapper.writeValueAsString(device);
+						ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
+						mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
+						
+						userInfo.setFcmid(member.getFcmid());
 					}
 					// 새로운 키 생성 
 					key = hashingUtil.getHashedString(findMember.getEmail() + userInfo.getDeviceid());
