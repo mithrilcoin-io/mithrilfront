@@ -93,28 +93,27 @@ public class MemberController {
 			ParameterizedTypeReference<MemberInfo> typeRef = new ParameterizedTypeReference<MemberInfo>() {
 			};
 			MemberInfo memberInfo = mithrilApiTemplate.post("/member/signup/", memberRequest, typeRef);
-
+			
+			
 			// 정상적으로 회원등록완료
 			if (memberInfo != null && memberInfo.getIdx() > 0) {
 				// redis에 로그인으로 처리
 
 				key = hashingUtil.getHashedString(memberInfo.getEmail() + memberInfo.getDeviceid());
-				assignUserSession(memberInfo, null, key);
+				ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {};
+				UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + memberInfo.getIdx() + "/","", ref);
+				assignUserSession(memberInfo, userInfo, null, key);
+
+				
 				result.setCode(MithrilPlayCode.SUCCESS);
 
 			} else // 회원가입 실패
 			{
 				// 이미 있는 회원 문제
 				if (memberInfo != null && memberInfo.getIdx() < 0) {
-
 					result.setCode(MithrilPlayCode.EXIST_EMAIL);
-					// return new MithrilResponseEntity<MithrilApiResult>("Email is already exist.",
-					// HttpStatus.OK,
-					// request.getSession());
 				} else {
 					result.setCode(MithrilPlayCode.API_FAIL);
-					// return new MithrilResponseEntity<MithrilApiResult>("Fail", HttpStatus.OK,
-					// request.getSession());
 				}
 			}
 
@@ -165,6 +164,7 @@ public class MemberController {
 						device.setMember_idx(findMember.getIdx());
 						device.setDeviceid(member.getDeviceid());
 						device.setFcmid(member.getFcmid());
+						device.setOsversion(member.getOsversion());
 						String param = objMapper.writeValueAsString(device);
 						ParameterizedTypeReference<io.mithril.vo.member.Device> deviceRef = new ParameterizedTypeReference<io.mithril.vo.member.Device>() {};
 						mithrilApiTemplate.post("/member/update/device/", param, deviceRef);
@@ -338,7 +338,7 @@ public class MemberController {
 
 		String newHashedString = hashingUtil.getHashedString("authMail_" + id);
 		String emailId = redisDataRepo.getData("authMail_" + newHashedString);
-		//if (emailId == null) {
+		if (emailId == null) {
 			String emailAddress = redisDataRepo.getData("email_" + id);
 			Message authMail = new Message();
 			authMail.setSender(mailTemplateUtil.getDefaultSender());
@@ -357,8 +357,8 @@ public class MemberController {
 				Message resultMessage = mithrilApiTemplate.post("/message/send", mailParam, typeRef);
 				if (resultMessage != null && "M002003".equals(resultMessage.getState())) {
 					result.setCode(MithrilPlayCode.SUCCESS);
-					// 24 시간 동안만 유효한 코드 생성
-					//redisDataRepo.setData("authMail_" + newHashedString, emailAddress, 24, TimeUnit.HOURS);
+					// 30 second wait time 
+					redisDataRepo.setData("authMail_" + newHashedString, emailAddress, 30, TimeUnit.SECONDS);
 				} else {
 					result.setCode(MithrilPlayCode.API_FAIL);
 				}
@@ -367,9 +367,9 @@ public class MemberController {
 				result.setCode(MithrilPlayCode.API_ERROR);
 				e.printStackTrace();
 			}
-//		} else {
-//			result.setCode(MithrilPlayCode.ALREADY_SENDED);
-//		}
+		} else {
+			result.setCode(MithrilPlayCode.ALREADY_SENDED);
+		}
 
 		result.setResponseDate(new Date());
 		return new MithrilResponseEntity<MithrilApiResult>(result, HttpStatus.OK, id, userRedisSessionInfo);
@@ -448,9 +448,7 @@ public class MemberController {
 	 * @param session
 	 * @return
 	 */
-	private UserInfo assignUserSession(MemberInfo info, MemberDetail detail, String key) {
-
-		UserInfo userInfo = new UserInfo();
+	private UserInfo assignUserSession(MemberInfo info, UserInfo userInfo, MemberDetail detail, String key) {
 
 		// hashing 된 고유 아이디 전달
 		userInfo.setId(key);
