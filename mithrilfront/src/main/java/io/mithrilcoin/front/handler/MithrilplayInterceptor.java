@@ -1,7 +1,6 @@
 package io.mithrilcoin.front.handler;
 
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.ParameterizedType;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
