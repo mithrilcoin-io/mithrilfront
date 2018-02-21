@@ -90,8 +90,7 @@ public class MemberController {
 			result.setRequestDate(new Date());
 			request.getSession().invalidate();
 			String memberRequest = objMapper.writeValueAsString(signupMember);
-			ParameterizedTypeReference<MemberInfo> typeRef = new ParameterizedTypeReference<MemberInfo>() {
-			};
+			ParameterizedTypeReference<MemberInfo> typeRef = new ParameterizedTypeReference<MemberInfo>() {};
 			MemberInfo memberInfo = mithrilApiTemplate.post("/member/signup/", memberRequest, typeRef);
 			
 			
