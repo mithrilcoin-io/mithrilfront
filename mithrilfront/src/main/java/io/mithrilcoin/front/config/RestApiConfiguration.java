@@ -38,7 +38,7 @@ public class RestApiConfiguration {
 	}
 	
 	@Bean(name="mithrilAPIRestTemplate", autowire = Autowire.BY_NAME)
-	public IRestTemplate cashchargeAPIRestTemplate(){
+	public IRestTemplate mithrilAPIRestTemplate(){
 		return new APIRestTemplate(
 				getRestOperation(env.getProperty("mithrilapi.timeout", int.class, 15000))
 				, env.getProperty("mithrilapi.host")
@@ -47,7 +47,7 @@ public class RestApiConfiguration {
 				);
 	}
 	
-	
+	/*
 	@Bean(name="bizMailAPIRestTemplate", autowire = Autowire.BY_NAME)
 	public IRestTemplate bizMailAPIRestTemplate(){
 //		biz.mail.host=http://www.bizmailer.co.kr
@@ -59,7 +59,7 @@ public class RestApiConfiguration {
 				, env.getProperty("biz.mail.port")
 				, null
 				);
-	}
+	}*/
 	@Bean
 	public ApiAccessInfo frontApiAccessInfo()
 	{
