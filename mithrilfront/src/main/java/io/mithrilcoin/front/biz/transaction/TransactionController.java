@@ -58,7 +58,7 @@ public class TransactionController {
 
 		Member findMember = mithrilApiTemplate.get("/member/select/", memberString, ref);
 		if (findMember.getIdx() > 0) {
-
+			transaction.setMember_idx(findMember.getIdx());
 			String applistParam = objMapper.writeValueAsString(transaction);
 			ParameterizedTypeReference<Transaction> typeRef = new ParameterizedTypeReference<Transaction>() {
 			};
@@ -73,8 +73,8 @@ public class TransactionController {
 
 	}
 
-	@GetMapping("/select/listnopage")
-	public MithrilResponseEntity<ArrayList<Transaction>> selectlistNopage(@RequestBody Transaction transaction,
+	@GetMapping("/select/listnopage/{id}")
+	public MithrilResponseEntity<ArrayList<Transaction>> selectlistNopage(Transaction transaction,
 			@PathVariable String id) {
 		String email = redisDataRepo.getData("email_" + id);
 		MemberInfo member = new MemberInfo();
@@ -89,6 +89,8 @@ public class TransactionController {
 
 		Member findMember = mithrilApiTemplate.get("/member/select/", memberString, ref);
 		if (findMember.getIdx() > 0) {
+			
+			transaction.setMember_idx(findMember.getIdx());
 			ParameterizedTypeReference<ArrayList<Transaction>> typeRef = new ParameterizedTypeReference<ArrayList<Transaction>>() {
 			};
 			Map<String, String> map = ParameterChanger.extractFieldNameValueMap(Transaction.class, transaction);
