@@ -31,6 +31,7 @@ import io.mithril.vo.entity.MithrilPlayCode;
 import io.mithril.vo.member.Member;
 import io.mithril.vo.member.MemberDetail;
 import io.mithril.vo.member.MemberInfo;
+import io.mithril.vo.member.MemberSocial;
 import io.mithril.vo.member.UserInfo;
 import io.mithril.vo.message.Message;
 import io.mithril.vo.mtp.MtpTotal;
@@ -111,7 +112,11 @@ public class MemberController {
 				// 이미 있는 회원 문제
 				if (memberInfo != null && memberInfo.getIdx() < 0) {
 					result.setCode(MithrilPlayCode.EXIST_EMAIL);
-				} else {
+				} 
+				else if(memberInfo.getIdx() == 0){
+					result.setCode(MithrilPlayCode.NOT_FOUND);
+				}
+				else {
 					result.setCode(MithrilPlayCode.API_FAIL);
 				}
 			}
@@ -146,7 +151,7 @@ public class MemberController {
 			if (findMember != null) {
 				if (findMember.getIdx() > 0) {
 					ParameterizedTypeReference<UserInfo> ref = new ParameterizedTypeReference<UserInfo>() {};
-
+					
 					UserInfo userInfo = mithrilApiTemplate.get("/member/select/userInfo/" + findMember.getIdx() + "/","", ref);
 					// 다른기기에서 로그인 함. 
 					if( !userInfo.getDeviceid().equals(member.getDeviceid()))
@@ -202,6 +207,8 @@ public class MemberController {
 					String encodeEmail = URLEncoder.encode(member.getEmail(), "UTF-8");
 					MtpTotal total = mithrilApiTemplate.get("/mtp/select/" + encodeEmail, "", tref);
 					userInfo.setMtptotal(total);
+					userInfo.setMembersocial(member.getMembersocial());
+					
 					userRedisSessionInfo.setData(key, userInfo, 30, TimeUnit.DAYS);
 					redisDataRepo.setData("email_" + key, member.getEmail(), 30, TimeUnit.DAYS);
 
@@ -455,6 +462,13 @@ public class MemberController {
 		userInfo.setState(info.getState());
 		userInfo.setMemberDetail(detail);
 		userInfo.setRecentLoginTime(info.getRecentlogindate());
+		if( info.getMembersocial() != null)
+		{
+			MemberSocial social = new MemberSocial();
+			social.setSnscode(info.getMembersocial().getSnscode());
+			social.setTokenid(info.getMembersocial().getTokenid());
+			userInfo.setMembersocial(social);
+		}
 		userRedisSessionInfo.setData(key, userInfo, 30, TimeUnit.DAYS);
 		redisDataRepo.setData("email_" + key, info.getEmail(), 30, TimeUnit.DAYS);
 
