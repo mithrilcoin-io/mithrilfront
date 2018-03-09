@@ -12,13 +12,13 @@
 			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread][%method:%line] %-5level %logger{36} - %msg%n</pattern>
 		</encoder>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<fileNamePattern>/data/log/mithrilplay/mithril_front/mithril_front-log.%d{yyyy-MM-dd}_%i.log</fileNamePattern>
+			<fileNamePattern>/data/log/mithrilplay/mithril_front/mithril_front-log.%d{yyyy-MM-dd}.log</fileNamePattern>
 			
 			<!-- each file should be at most 10MB, keep 30 days worth of history -->
-			<maxHistory>30</maxHistory>
+		<!-- 	<maxHistory>30</maxHistory>
 			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
 				<maxFileSize>100MB</maxFileSize>
-			</timeBasedFileNamingAndTriggeringPolicy>
+			</timeBasedFileNamingAndTriggeringPolicy> -->
 		</rollingPolicy>
   </appender>
   <!-- 
