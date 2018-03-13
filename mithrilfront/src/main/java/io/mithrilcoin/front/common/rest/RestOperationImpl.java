@@ -73,6 +73,11 @@ public class RestOperationImpl {
 			return "";
 		}
 	}
+	public void setAccessInfo(ApiAccessInfo info)
+	{
+		this.accessInfo = info;
+	}
+	
 
 	public String getCallUrlNoAccess(String restUrl) {
 		StringBuilder sb = getRestUrl(restUrl);

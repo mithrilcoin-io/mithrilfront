@@ -48,18 +48,18 @@ public class RestApiConfiguration {
 	}
 	
 	
-	@Bean(name="bizMailAPIRestTemplate", autowire = Autowire.BY_NAME)
-	public IRestTemplate bizMailAPIRestTemplate(){
-//		biz.mail.host=http://www.bizmailer.co.kr
-//		biz.mail.port=80
-//		biz.mail.time=15000
-		return new APIRestTemplate(
-				getRestOperation(env.getProperty("biz.mail.host.timeout	", int.class, 15000))
-				, env.getProperty("biz.mail.host")
-				, env.getProperty("biz.mail.port")
-				, null
-				);
-	}
+//	@Bean(name="bizMailAPIRestTemplate", autowire = Autowire.BY_NAME)
+//	public IRestTemplate bizMailAPIRestTemplate(){
+////		biz.mail.host=http://www.bizmailer.co.kr
+////		biz.mail.port=80
+////		biz.mail.time=15000
+//		return new APIRestTemplate(
+//				getRestOperation(env.getProperty("biz.mail.host.timeout	", int.class, 15000))
+//				, env.getProperty("biz.mail.host")
+//				, env.getProperty("biz.mail.port")
+//				, null
+//				);
+//	}
 	@Bean
 	public ApiAccessInfo frontApiAccessInfo()
 	{
