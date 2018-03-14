@@ -40,7 +40,7 @@ public class MithrilplayAdviceHandler implements ResponseBodyAdvice<Object> {
 
 	@Override
 	public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
-		
+
 		return true;
 	}
 
@@ -51,24 +51,25 @@ public class MithrilplayAdviceHandler implements ResponseBodyAdvice<Object> {
 
 		if (body instanceof MithrilResponse) {
 
-			String[] urls = request.getURI().getPath().split("/");
-			String key = urls[urls.length - 1];
+			MithrilResponse mithriResponse = ((MithrilResponse) body);
+			if (mithriResponse.getUserInfo() != null) {
+				String key = mithriResponse.getUserInfo().getId();
+				if (userInforedis.hasContainKey(key)) {
+					UserInfo userInfo = userInforedis.getData(key);
+					if (userInfo != null) {
 
-			if (userInforedis.hasContainKey(key)) {
-				UserInfo userInfo = userInforedis.getData(key);
-				if (userInfo != null) {
+						try {
+							userInfo = updatePersonalMTP(key, userInfo);
+							// call realtime Rank data.
+							userInfo.setMemberRating(updateUserRating(key));
+							mithriResponse.setUserInfo(userInfo);
 
-					try {
-						userInfo = updatePersonalMTP(key, userInfo);
-						// call realtime Rank data.
-						userInfo.setMemberRating(updateUserRating(key));
-						((MithrilResponse) body).setUserInfo(userInfo);
-						
-					} catch (UnsupportedEncodingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						} catch (UnsupportedEncodingException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						userInforedis.setData(key, userInfo, 30, TimeUnit.DAYS);
 					}
-					userInforedis.setData(key, userInfo, 30, TimeUnit.DAYS);
 				}
 			}
 
@@ -85,15 +86,14 @@ public class MithrilplayAdviceHandler implements ResponseBodyAdvice<Object> {
 		userInfo.setMtptotal(total);
 		return userInfo;
 	}
-	
-	private MemberRating updateUserRating(String key) throws UnsupportedEncodingException
-	{
+
+	private MemberRating updateUserRating(String key) throws UnsupportedEncodingException {
 		String email = redisdataRepo.getData("email_" + key);
 		String encodeEmail = URLEncoder.encode(email, "UTF-8");
 		ParameterizedTypeReference<MemberRating> typeRef = new ParameterizedTypeReference<MemberRating>() {
 		};
 		MemberRating rate = mithrilApiTemplate.get("/rate/select/" + encodeEmail, "", typeRef);
-		
+
 		return rate;
 	}
 

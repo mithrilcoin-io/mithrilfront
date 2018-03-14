@@ -16,13 +16,6 @@ public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 
 	@Autowired
 	private RedisDataRepository<String, UserInfo> userInforedis;
-	//
-	// @Autowired
-	// private RedisDataRepository<String, String> redisdataRepo;
-
-	// @Autowired
-	// @Qualifier("mithrilAPIRestTemplate")
-	// private IRestTemplate mithrilApiTemplate;
 
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
@@ -46,19 +39,6 @@ public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 
 		return true;
 	}
-
-	// private UserInfo updatePersonalMTP(String key, UserInfo userInfo) throws
-	// UnsupportedEncodingException {
-	// String email = redisdataRepo.getData("email_" + key);
-	// String encodeEmail = URLEncoder.encode(email, "UTF-8");
-	// ParameterizedTypeReference<MtpTotal> typeRef = new
-	// ParameterizedTypeReference<MtpTotal>() {
-	// };
-	// MtpTotal total = mithrilApiTemplate.get("/mtp/select/" + encodeEmail, "",
-	// typeRef);
-	// userInfo.setMtptotal(total);
-	// return userInfo;
-	// }
 
 	@Override
 	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
