@@ -48,7 +48,7 @@ public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 				return false;
 			}
 			userInfo = updatePersonalMTP(key, userInfo);
-			userInforedis.setData(key, userInfo, 30, TimeUnit.DAYS);
+			userInforedis.setData(key, userInfo, 30, TimeUnit.DAYS);			
 		}
 		else
 		{
@@ -66,6 +66,7 @@ public class MithrilplayInterceptor extends HandlerInterceptorAdapter {
 		};
 		MtpTotal total = mithrilApiTemplate.get("/mtp/select/" + encodeEmail, "", typeRef);
 		userInfo.setMtptotal(total);
+		redisdataRepo.setData("email_" + key, email);
 		return userInfo;
 	}
 
